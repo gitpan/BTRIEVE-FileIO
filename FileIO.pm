@@ -1,6 +1,6 @@
 package BTRIEVE::FileIO;
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 use BTRIEVE::Native();
 
@@ -18,6 +18,79 @@ sub GetPrevious  { $_[0]->_Get (  7 ) }
 
 sub IsOk         { $_[0]->{Status} ? 0 : 1 }
 
+# -----------------------------------------------------------------------------
+sub Create
+# -----------------------------------------------------------------------------
+{
+  my $class = shift;
+  my $File  = shift;
+  my $FSpec = shift || {};
+  my $KSpec = shift || [];
+  my $self  = {};
+
+  my $DefFSpec =
+  {
+    LogicalRecordLength                => 128
+  , PageSize                           => 512
+  , NumberOfIndexes                    => scalar @$KSpec
+  , FileFlags                          => 0
+  , NumberOfDuplicatePointersToReserve => 0
+  , Allocation                         => 0
+  };
+  %$FSpec = ( %$DefFSpec, %$FSpec );
+  my @FSpec = @$FSpec
+  {
+   'LogicalRecordLength'
+  ,'PageSize'
+  ,'NumberOfIndexes'
+  ,'FileFlags'
+  ,'NumberOfDuplicatePointersToReserve'
+  ,'Allocation'
+  };
+  my $DefKSpec =
+  {
+    KeyPosition               => 1
+  , KeyLength                 => 1
+  , KeyFlags                  => 0
+  , ExtendedDataType          => 0
+  , NullValue                 => 0
+  , ManuallyAssignedKeyNumber => 0
+  , ACSNumber                 => 0
+  };
+  $self->{Pos}  = "\0" x 128;
+  $self->{Size} = 16 + @$KSpec * 16;
+  $self->{Data} = pack 'SSSx4SCxS', @FSpec;
+
+  for ( @$KSpec )
+  {
+    my %KSpec = ( %$DefKSpec, %$_ );
+    my @KSpec = @KSpec
+    {
+     'KeyPosition'
+    ,'KeyLength'
+    ,'KeyFlags'
+    ,'ExtendedDataType'
+    ,'NullValue'
+    ,'ManuallyAssignedKeyNumber'
+    ,'ACSNumber'
+    };
+    $self->{Data} .= pack 'SSSx4CCx2CC', @KSpec;
+  }
+  $self->{Key} = $File;
+
+  $self->{Status} = BTRIEVE::Native::Call
+  (
+    14
+  , $self->{Pos}
+  , $self->{Data}
+  , $self->{Size}
+  , $self->{Key}
+  , 0
+  );
+  return bless $self, $class if $self->{Status};
+
+  $class->Open( $File );
+}
 # -----------------------------------------------------------------------------
 sub Open
 # -----------------------------------------------------------------------------
@@ -163,7 +236,30 @@ This module provides methods for common Btrieve operations.
 
 =over
 
-=item Open( $Filename )
+=item Create( $FileName, $FileSpec, $KeySpecs )
+
+Creates a Btrieve file. This is a constructor method and returns an
+BTRIEVE::FileIO object.
+
+$FileSpec is a hash reference with the following defaults:
+
+  LogicalRecordLength                => 128
+  PageSize                           => 512
+  FileFlags                          => 0
+  NumberOfDuplicatePointersToReserve => 0
+  Allocation                         => 0
+
+$KeySpecs is an array reference of hash references with the following
+defaults:
+
+  KeyPosition               => 1
+  KeyLength                 => 1
+  KeyFlags                  => 0
+  ExtendedDataType          => 0
+  NullValue                 => 0
+  ManuallyAssignedKeyNumber => 0
+
+=item Open( $FileName )
 
 Opens a Btrieve file. This is a constructor method and returns an
 BTRIEVE::FileIO object.
