@@ -1,6 +1,6 @@
 package BTRIEVE::FileIO;
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use BTRIEVE::Native();
 
