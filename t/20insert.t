@@ -4,24 +4,17 @@ use strict;
 use warnings;
 use Test::More tests => 6;
 use My_Test();
-BEGIN { use_ok 'BTRIEVE::Native' }
+BEGIN { use_ok 'BTRIEVE::FileIO' }
 
-my $B = \&BTRIEVE::Native::Call;
+my $B = BTRIEVE::FileIO->Open( $My_Test::File );
+is $B->{Status}, 0,'Open';
 
-my $p = "\0" x 128;
-my $d = "\0";
-my $l = 0;
-my $k = $My_Test::File;
-
-is $B->( 0, $p, $d, $l, $k, 0 ), 0,'open';
-
-$l = $My_Test::Length;
-$k = "\0" x 255;
+$B->{Size} = $My_Test::Length;
 
 for my $a ( @$My_Test::Data )
 {
-  $d = pack $My_Test::Mask, @$a;
-  is $B->( 2, $p, $d, $l, $k, -1 ), 0,"insert @$a";
+  $B->Insert( pack $My_Test::Mask, @$a );
+  is $B->{Status}, 0,"Insert @$a";
 }
-$d = pack $My_Test::Mask, @{$My_Test::Data->[0]};
-is $B->( 2, $p, $d, $l, $k, -1 ), 5,"insert @{$My_Test::Data->[0]} (dup)";
+$B->Insert( pack $My_Test::Mask, @{$My_Test::Data->[0]} );
+is $B->{Status}, 5,"Insert @{$My_Test::Data->[0]} (dup)";

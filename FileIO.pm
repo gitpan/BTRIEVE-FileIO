@@ -1,6 +1,6 @@
 package BTRIEVE::FileIO;
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 use BTRIEVE::Native();
 
@@ -58,6 +58,25 @@ sub Close
   , $self->{Size}
   , $self->{Key}
   , 0
+  );
+  $self->IsOk;
+}
+# -----------------------------------------------------------------------------
+sub Insert
+# -----------------------------------------------------------------------------
+{
+  my $self = shift;
+
+  $self->{Data} = shift if @_;
+
+  $self->{Status} = BTRIEVE::Native::Call
+  (
+    2
+  , $self->{Pos}
+  , $self->{Data}
+  , $self->{Size}
+  , $self->{Key}
+  , -1
   );
   $self->IsOk;
 }
@@ -158,6 +177,11 @@ This method is called automatically from within DESTROY.
 
 Tests the Status property. It returns true if Status indicates
 success and false if Status indicates an error.
+
+=item Insert( $Data )
+
+Inserts $Data into the Btrieve file. If $Data is omitted,
+the Data property is used instead.
 
 =item StepFirst
 
