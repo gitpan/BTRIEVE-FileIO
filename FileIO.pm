@@ -1,6 +1,6 @@
 package BTRIEVE::FileIO;
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use BTRIEVE::Native();
 
@@ -120,11 +120,118 @@ BTRIEVE::FileIO - Btrieve file I/O operations
 
   use BTRIEVE::FileIO();
 
-  BTRIEVE::FileIO->Open('TEST.BTR');
+  my $B = BTRIEVE::FileIO->Open('TEST.BTR');
+
+  $B->{Size} = 13;
+
+  for ( $B->StepFirst; $B->IsOk; $B->StepNext )
+  {
+    print join(':', unpack('A3A10', $B->{Data} ) ), "\n";
+  }
+
+  $B->{Key} = 103;
+
+  for ( $B->GetEqual; $B->IsOk; $B->GetNext )
+  {
+    print join(':', unpack('A3A10', $B->{Data} ) ), "\n";
+  }
 
 =head1 DESCRIPTION
 
 This module provides methods for common Btrieve operations.
+
+=head2 Methods
+
+=over
+
+=item Open( $Filename )
+
+Opens a Btrieve file. This is a constructor method and returns an
+BTRIEVE::FileIO object.
+
+=item Close
+
+Closes a Btrieve file associated with an BTRIEVE::FileIO object.
+This method is called automatically from within DESTROY.
+
+=item IsOk
+
+Tests the Status property. It returns true if Status indicates
+success and false if Status indicates an error.
+
+=item StepFirst
+
+Retrieves the physical first record of the file.
+
+=item StepLast
+
+Retrieves the physical last record of the file.
+
+=item StepNext
+
+Retrieves the physical next record of the file.
+
+=item StepPrevious
+
+Retrieves the physical previous record of the file.
+
+=item GetFirst
+
+Retrieves the logical first record of the file,
+based on the KeyNum property.
+
+=item GetLast
+
+Retrieves the logical last record of the file,
+based on the KeyNum property.
+
+=item GetEqual
+
+Retrieves a record which key is equal to the one specified
+by the Key/KeyNum properties.
+
+=item GetGreater
+
+Retrieves a record which key is greater than the one specified
+by the Key/KeyNum properties.
+
+=item GetNext
+
+Retrieves the logical next record of the file.
+
+=item GetPrevious
+
+Retrieves the logical previous record of the file.
+
+=back
+
+=head2 Properties
+
+=over
+
+=item Data
+
+The data buffer used to transfer data from and to the Btrieve file.
+
+=item Size
+
+The size of the data buffer. Default is 255.
+
+=item KeyNum
+
+The number of the key used for logical (key based) data retrieval operations.
+Default is 0.
+
+=item Key
+
+The buffer of the key used for logical (key based) data retrieval operations.
+
+=item Status
+
+The status code. This is the return value of the native Btrieve call.
+It contains 0 for success or a native error code.
+
+=back
 
 =head1 AUTHOR
 
@@ -139,6 +246,6 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<perl>.
+L<perl>, L<BTRIEVE::Native>.
 
 =cut
